@@ -1,61 +1,49 @@
 #include "tokenizer.h"
-#include <stdio.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
-static int get_token_count_in_str(const char **start) {
-  const char *p = *start;
-
-  int sigh_count = 0;
-  int quoation_mark_count = 0;
-
-  while (*p != ' ') {
-    if (*p == ',' || *p == '.' || *p == '<' || *p == '>') {
-      sigh_count++;
-    } else if (*p == '\'') {
-      quoation_mark_count++;
-    }
-
-    p++;
-  }
-
-  p++;
-
-  *start = p;
-
-  if (sigh_count + quoation_mark_count == 0) {
-    return 1;
-  }
-
-  if (quoation_mark_count == 0) {
-    return (sigh_count * 2) + 2;
-  }
-
-  return (sigh_count * 2) + ((quoation_mark_count / 2) * 3) + 2;
-}
-
 static int get_token_count(const char *data) {
-  if (data == NULL) {
+  if (!data)
     return 0;
-  }
 
-  int number = 0;
-
+  int count = 0;
   const char *p = data;
 
-  while (p != NULL) {
-    int number_in_str = get_token_count_in_str(&p);
-    if (number_in_str == 0) {
+  while (*p != '\0') {
+
+    while (*p == ' ' || *p == '\t' || *p == '\n')
+      p++;
+
+    if (*p == '\0')
       break;
+
+    if (*p == ',' || *p == '.' || *p == '<' || *p == '>') {
+      count++;
+      p++;
+      continue;
     }
 
-    number += number_in_str;
+    if (*p == '\'') {
+      p++;
+      while (*p != '\0' && *p != '\'')
+        p++;
+      if (*p == '\'')
+        p++;
+      count++;
+      continue;
+    }
 
-    p++;
+    while (*p != '\0' && *p != ' ' && *p != ',' && *p != '.' && *p != '<' &&
+           *p != '>') {
+      p++;
+    }
+
+    count++;
   }
 
-  return number;
+  return count;
 }
 
 static Token get_token_from_str(char **pos) {
@@ -204,9 +192,54 @@ static Token get_next_token(char **pos) {
     return tkn;
   default:
     fprintf(stderr, "unknown symbol: %c", *p);
-  
-    exit(1);
+
+    tkn.type = UNKNOWN;
+
+    return tkn;
   }
 }
 
-Token *tokenize(const char *data) {}
+Token *tokenize(char *data) {
+  int token_number = get_token_count(data);
+
+  Token *start = calloc(token_number, sizeof(Token));
+  if (!start) {
+    fprintf(stderr, "failed allocate memory for tokens");
+
+    return NULL;
+  }
+
+  Token *position = start;
+  Token tkn;
+
+  char *p = data;
+
+  while (*p != '\0') {
+    tkn = get_next_token(&p);
+
+    printf("new token with len: %zu\n", tkn.len);
+
+    if (position - start >= token_number - 1) {
+      fprintf(stderr, "Too many tokens (max %d)\n", token_number - 1);
+      free(start);
+      return NULL;
+    }
+
+    *position = tkn;
+    position++;
+
+    if (tkn.type == UNKNOWN) {
+      fprintf(stderr, "Unknown token near position %zu\n", (size_t)(p - data));
+      free(start);
+      return NULL;
+    }
+  }
+
+  tkn.type = EOF_TOKEN;
+  tkn.len = 0;
+  tkn.start = NULL;
+
+  *position = tkn;
+
+  return start;
+}
