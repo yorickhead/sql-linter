@@ -1,6 +1,24 @@
 #include "lexer.h"
+#include <string.h>
+#include <strings.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+
+static bool match_token(Token *tkn, char *str) {
+    if (tkn == NULL) {
+        return false;
+    } 
+
+    char *token_str = calloc(tkn->len+1, sizeof(char));
+    strncpy(tkn->start, token_str, tkn->len);
+
+    if (strcmp(token_str, str) == 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 static SelectStmt *create_select_stmt() {
     SelectStmt *stmt = malloc(sizeof(SelectStmt));
@@ -21,7 +39,11 @@ static SelectStmt *parse_select_stmt(Token *start) {
         return NULL;
     }
 
-    if ()
+    if (!match_token(start, "select")) {
+        fprintf(stderr, "start token is not select");
+
+        return NULL;
+    }
 
     start++;
 
