@@ -4,6 +4,7 @@ enum TokenType {
   LBRACE,         // "("
   RBRACE,         // ")"
   COMMA,          // ","
+  DOTE,           // "."
   SEMICOLON,      // ";"
   GREATER,        // ">"
   LESS,           // "<"
