@@ -97,149 +97,103 @@ static Token get_next_token(char **pos) {
     p++;
 
   Token tkn;
+  tkn.start = p;
+  tkn.len = 0;
+
+  if (*p == '\0') {
+    tkn.type = EOF_TOKEN;
+    return tkn;
+  }
 
   if (isalpha(*p)) {
     tkn = get_token_from_str(&p);
-
-    *pos = p + 1;
-
+    *pos = p;
     return tkn;
   }
 
   if (isdigit(*p)) {
     tkn = get_token_from_count(&p);
-
-    *pos = p + 1;
-
+    *pos = p;
     return tkn;
   }
 
   switch (*p) {
   case '(':
     tkn.type = LBRACE;
-    tkn.len = 1;
-    tkn.start = p;
-
-    *pos = p + 1;
-
-    return tkn;
-
+    break;
   case ')':
     tkn.type = RBRACE;
-    tkn.len = 1;
-    tkn.start = p;
-
-    *pos = p + 1;
-
-    return tkn;
+    break;
   case ',':
     tkn.type = COMMA;
-    tkn.len = 1;
-    tkn.start = p;
-
-    *pos = p + 1;
-
-    return tkn;
-
+    break;
   case ';':
     tkn.type = SEMICOLON;
-    tkn.len = 1;
-    tkn.start = p;
-
-    *pos = p + 1;
-
-    return tkn;
-
+    break;
   case '>':
     tkn.type = GREATER;
-    tkn.len = 1;
-    tkn.start = p;
-
-    *pos = p + 1;
-
-    return tkn;
+    break;
   case '<':
     tkn.type = LESS;
-    tkn.len = 1;
-    tkn.start = p;
-
-    *pos = p + 1;
-
-    return tkn;
+    break;
+  case '.':
+    tkn.type = DOTE;
+    break;
   case '=':
     tkn.type = EQUAL;
-    tkn.len = 1;
-    tkn.start = p;
-
-    *pos = p + 1;
-
-    return tkn;
+    break;
   case '\'':
     tkn.type = QUOTATION_MARK;
-    tkn.len = 1;
-    tkn.start = p;
-
-    *pos = p + 1;
-
-    return tkn;
+    break;
   case '*':
     tkn.type = ASTERISK;
-    tkn.len = 1;
-    tkn.start = p;
-
-    *pos = p + 1;
-
-    return tkn;
+    break;
   default:
-    fprintf(stderr, "unknown symbol: %c", *p);
-
+    fprintf(stderr, "unknown symbol: %c\n", *p);
     tkn.type = UNKNOWN;
-
+    *pos = p + 1;
     return tkn;
   }
+
+  tkn.len = 1;
+  *pos = p + 1;
+  return tkn;
 }
 
 Token *tokenize(char *data) {
   int token_number = get_token_count(data);
 
-  Token *start = calloc(token_number, sizeof(Token));
+  Token *start = calloc(token_number + 1, sizeof(Token));
   if (!start) {
     fprintf(stderr, "failed allocate memory for tokens");
-
     return NULL;
   }
 
   Token *position = start;
-  Token tkn;
-
   char *p = data;
 
-  while (*p != '\0') {
-    tkn = get_next_token(&p);
+  while (1) {
+    Token tkn = get_next_token(&p);
 
-    printf("new token with len: %zu\n", tkn.len);
-
-    if (position - start >= token_number - 1) {
-      fprintf(stderr, "Too many tokens (max %d)\n", token_number - 1);
-      free(start);
-      return NULL;
+    if (tkn.type == EOF_TOKEN) {
+      *position = tkn;
+      break;
     }
-
-    *position = tkn;
-    position++;
 
     if (tkn.type == UNKNOWN) {
       fprintf(stderr, "Unknown token near position %zu\n", (size_t)(p - data));
       free(start);
       return NULL;
     }
+
+    *position++ = tkn;
+
+    if (position - start >= token_number) {
+      fprintf(stderr, "Too many tokens (max %d)\n", token_number);
+      free(start);
+      return NULL;
+    }
   }
-
-  tkn.type = EOF_TOKEN;
-  tkn.len = 0;
-  tkn.start = NULL;
-
-  *position = tkn;
 
   return start;
 }
