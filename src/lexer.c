@@ -13,7 +13,7 @@ static bool match_token(Token *tkn, char *str) {
   char *token_str = calloc(tkn->len + 1, sizeof(char));
   strncpy(tkn->start, token_str, tkn->len);
 
-  token_str[tkn->len+1] = '\0';
+  token_str[tkn->len + 1] = '\0';
 
   bool res = false;
 
@@ -39,6 +39,26 @@ static char *str_from_token(Token *tkn) {
   return token_str;
 }
 
+static bool *column_has_alias(Token *pos, int *index) {
+  Token *p = pos;
+
+  while (pos->type != COMMA && !match_token(pos, "FROM") &&
+         !match_token(p, "from")) {
+
+    if (match_token(p, "as") || match_token(p, "AS")) {
+      *index = p - pos;
+
+      return true;
+    }
+
+    p++;
+  }
+
+  *index = 0;
+
+  return false;
+}
+
 static SelectStmt *create_select_stmt() {
   SelectStmt *stmt = malloc(sizeof(SelectStmt));
   if (stmt == NULL) {
@@ -53,7 +73,7 @@ static SelectStmt *create_select_stmt() {
 }
 
 static SelectStmt *parse_select_stmt(Token **pos) {
-    Token *p = *pos;
+  Token *p = *pos;
 
   SelectStmt *stmt = create_select_stmt();
   if (stmt == NULL) {
@@ -70,12 +90,20 @@ static SelectStmt *parse_select_stmt(Token **pos) {
 
   size_t column_count = 0;
 
-  ColumnRef *column_ref = parse_columnref(&p);
-  if (column_ref == NULL) {
-    return NULL;
-  }
+  while (!match_token(p, "FROM") && !match_token(p, "from")) {
+    int index;
 
-  column_count++;
+    if (column_has_alias(p, &index)) {
+      parse_alias(&p, index);
+    } else {
+      ColumnRef *column_ref = parse_columnref(&p);
+      if (column_ref == NULL) {
+        return NULL;
+      }
+    }
+
+    column_count++;
+  }
 }
 
 static ColumnRef *create_columnref() {
@@ -92,64 +120,62 @@ static ColumnRef *create_columnref() {
 }
 
 static ColumnRef *parse_columnref(Token **pos) {
-    Token *p = *pos;
+  Token *p = *pos;
 
-    ColumnRef *columnref = create_columnref();
-    if (!columnref) {
-        return NULL;
-    }
+  ColumnRef *columnref = create_columnref();
+  if (!columnref) {
+    return NULL;
+  }
 
-    if (p->type != STRING) {
-        fprintf(stderr, "columnref start type is not string");
-    
-        return NULL;
-    }
+  if (p->type != STRING) {
+    fprintf(stderr, "columnref start type is not string");
 
-    columnref->table = str_from_token(p);
+    return NULL;
+  }
 
-    p++;
+  columnref->table = str_from_token(p);
 
-    if (p->type != DOTE) {
-        fprintf(stderr, "columnref separator is not dote");
+  p++;
 
-        return NULL;
-    }
+  if (p->type != DOTE) {
+    fprintf(stderr, "columnref separator is not dote");
 
-    p++;
+    return NULL;
+  }
 
-    if (p->type != STRING) {
-        fprintf(stderr, "columnref end type is not string");
+  p++;
 
-        return NULL;
-    }
+  if (p->type != STRING) {
+    fprintf(stderr, "columnref end type is not string");
 
-    columnref->column = str_from_token(p);
+    return NULL;
+  }
 
-    return columnref;
+  columnref->column = str_from_token(p);
+
+  return columnref;
 }
 
 static Alias *create_alias() {
-    Alias *alias = malloc(sizeof(Alias));
-    if (!alias) {
-        fprintf(stderr, "failed allocate memory for alias");
+  Alias *alias = malloc(sizeof(Alias));
+  if (!alias) {
+    fprintf(stderr, "failed allocate memory for alias");
 
-        return NULL;
-    }
+    return NULL;
+  }
 
-    alias->base.type = NODE_ALIAS;
+  alias->base.type = NODE_ALIAS;
 
-    return alias;
+  return alias;
 }
 
 static Alias *parse_alias(Token **pos, int as_token_index) {
-    Token *p = *pos;
+  Token *p = *pos;
 
-    Alias *alias = create_alias();
-    if (alias == NULL) {
-        return NULL;
-    }
+  Alias *alias = create_alias();
+  if (alias == NULL) {
+    return NULL;
+  }
 
-    Token *expr_start = p;
-
-    
+  Token *expr_start = p;
 }
