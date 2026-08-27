@@ -104,6 +104,31 @@ static SelectStmt *parse_select_stmt(Token **pos) {
 
     column_count++;
   }
+
+  
+}
+
+static FromClause *create_fromclause() {
+  FromClause *fc = malloc(sizeof(FromClause));
+  if (!fc) {
+    fprintf(stderr, "failed allocate memory for from clause");
+
+    return NULL;
+  }
+
+  fc->base.type = NODE_FROM_CLAUSE;
+
+  return fc;
+}
+
+static FromClause *parse_fromclause(Token **start) {
+  FromClause *fc = create_fromclause();
+  if (fc == NULL) {
+    return NULL;
+  }
+
+  TableRef *tableref = parse_table_ref(Token **start)
+
 }
 
 static ColumnRef *create_columnref() {
@@ -178,4 +203,6 @@ static Alias *parse_alias(Token **pos, int as_token_index) {
   }
 
   Token *expr_start = p;
+
+
 }
