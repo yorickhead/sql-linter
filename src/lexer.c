@@ -104,8 +104,6 @@ static SelectStmt *parse_select_stmt(Token **pos) {
 
     column_count++;
   }
-
-  
 }
 
 static FromClause *create_fromclause() {
@@ -122,13 +120,21 @@ static FromClause *create_fromclause() {
 }
 
 static FromClause *parse_fromclause(Token **start) {
+  Token *p = *start;
+
   FromClause *fc = create_fromclause();
   if (fc == NULL) {
     return NULL;
   }
 
-  TableRef *tableref = parse_table_ref(Token **start)
+  TableRef *tableref = parse_table_ref(&p);
+  if (tableref == NULL) {
+    return NULL;
+  }
 
+  fc->table_ref = tableref;
+
+  return fc;
 }
 
 static ColumnRef *create_columnref() {
@@ -203,6 +209,4 @@ static Alias *parse_alias(Token **pos, int as_token_index) {
   }
 
   Token *expr_start = p;
-
-
 }
