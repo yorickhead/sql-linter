@@ -78,7 +78,7 @@ typedef struct{
 
 typedef struct{
     AstNode base;
-    AstNode *table_ref;
+    TableRef *table_ref;
 }FromClause;
 
 AstNode *get_ast(Token *tokens);
@@ -88,3 +88,5 @@ static ColumnRef *parse_columnref(Token **start);
 static FunctionCall *parse_function_call(Token **start);
 static BinaryExpr *parse_binary_expr(Token **start);
 static Alias *parse_alias(Token **start, int as_token_index);
+static TableRef *parse_table_ref(Token **start);
+static FromClause *parse_from_clause(Token **start);
