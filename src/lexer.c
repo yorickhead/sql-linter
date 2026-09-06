@@ -90,20 +90,38 @@ static SelectStmt *parse_select_stmt(Token **pos) {
 
   size_t column_count = 0;
 
+  AstNode *column_pos = *stmt->columns;
+
   while (!match_token(p, "FROM") && !match_token(p, "from")) {
     int index;
 
     if (column_has_alias(p, &index)) {
-      parse_alias(&p, index);
+      Alias *alias = parse_alias(&p, index);
+      if (alias == NULL) {
+        return NULL;
+      }
+    
     } else {
       ColumnRef *column_ref = parse_columnref(&p);
       if (column_ref == NULL) {
         return NULL;
       }
+
+      column_pos = (AstNode *)column_ref;
+      column_pos++;
     }
 
     column_count++;
   }
+
+  FromClause *from_clause = parse_from_clause(&p);
+  if (from_clause == NULL) {
+    return NULL;
+  }
+
+  column_count++
+
+  
 }
 
 static FromClause *create_fromclause() {
