@@ -119,9 +119,11 @@ static SelectStmt *parse_select_stmt(Token **pos) {
     return NULL;
   }
 
-  column_count++
+  column_count++;
 
-  
+  column_pos = (AstNode *)from_clause;
+
+  return stmt;
 }
 
 static FromClause *create_fromclause() {
